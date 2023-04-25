@@ -3,3 +3,4 @@
 1- Education is when you read the fine print. experience is what you get if you don't
 2- With a face like mine i do better in print
 3- what one has not experienced, one will never understand in print
+4- nothing in fine print is ever good news
