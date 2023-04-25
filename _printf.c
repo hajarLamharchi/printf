@@ -1,90 +1,73 @@
 #include "main.h"
 
-void cleanup(va_list args, buffer_t *output);
-int run_printf(const char *format, va_list args, buffer_t *output);
-int _printf(const char *format, ...);
+int whitespaces(const char *format, int *i);
 
 /**
- * cleanup - Peforms cleanup operations for _printf.
- * @args: A va_list of arguments provided to _printf.
- * @output: A buffer_t struct.
- */
-void cleanup(va_list args, buffer_t *output)
-{
-	va_end(args);
-	write(1, output->start, output->len);
-	free_buffer(output);
-}
-
-/**
- * run_printf - Reads through the format string for _printf.
- * @format: Character string to print - may contain directives.
- * @output: A buffer_t struct containing a buffer.
- * @args: A va_list of arguments.
+ * _printf - prints a formatted string to stdout, similar to printf.
+ * @format: the format of the string to be printed.
  *
- * Return: The number of characters stored to output.
- */
-int run_printf(const char *format, va_list args, buffer_t *output)
-{
-	int i, wid, prec, ret = 0;
-	char tmp;
-	unsigned char flags, len;
-	unsigned int (*f)(va_list, buffer_t *,
-			unsigned char, int, int, unsigned char);
-
-	for (i = 0; *(format + i); i++)
-	{
-		len = 0;
-		if (*(format + i) == '%')
-		{
-			tmp = 0;
-			flags = handle_flags(format + i + 1, &tmp);
-			wid = handle_width(args, format + i + tmp + 1, &tmp);
-			prec = handle_precision(args, format + i + tmp + 1,
-					&tmp);
-			len = handle_length(format + i + tmp + 1, &tmp);
-
-			f = handle_specifiers(format + i + tmp + 1);
-			if (f != NULL)
-			{
-				i += tmp + 1;
-				ret += f(args, output, flags, wid, prec, len);
-				continue;
-			}
-			else if (*(format + i + tmp + 1) == '\0')
-			{
-				ret = -1;
-				break;
-			}
-		}
-		ret += _memcpy(output, (format + i), 1);
-		i += (len != 0) ? 1 : 0;
-	}
-	cleanup(args, output);
-	return (ret);
-}
-
-/**
- * _printf - Outputs a formatted string.
- * @format: Character string to print - may contain directives.
+ * This function prints a formatted string to the stdout stream. It
+ * accepts a format string as its first argument and any additional arguments
+ * will be used to replace format specifiers in the format string. The function
  *
- * Return: The number of characters printed.
+ * Return: the number of characters printed to the stdout stream.
  */
 int _printf(const char *format, ...)
 {
-	buffer_t *output;
-	va_list args;
-	int ret;
+	va_list args, args_copy;
+	flags_t flags = {0};
+	int (*pfn)(va_list, int);
+	int i = 0, j, printed = 0, num, field_width;
 
-	if (format == NULL)
+	if (!format)
 		return (-1);
-	output = init_buffer();
-	if (output == NULL)
-		return (-1);
-
 	va_start(args, format);
+	va_copy(args_copy, args);
+	for (; format && format[i]; i++)
+	{
+		if (format[i] == '%')
+		{
+			if (format[++i] == '\0')
+				return (-1);
+			/* flag handler */
+			num = va_arg(args_copy, long);
+			parse_flags(format, &flags, num, &printed, &i);
+			/* handle field width */
+			if (_isdigit(format[i]))
+			{
+				field_width = format[i] - '0';
+				for (j = i + 1; _isdigit(format[j]); j++)
+					field_width = field_width * 10 + (format[j] - '0');
+				i = j - 1;
+			}
+			if (!whitespaces(format, &i))
+				return (-1);
+			pfn = get_print(&format[i]);
+			/* for invalid formats: print as is */
+			printed += pfn
+					? pfn(args, field_width)
+					: _putchar('%') + _putchar(format[i]);
+		}
+		else
+			printed += _putchar(format[i]);
+	}
+	va_end(args);
+	va_end(args_copy);
+	return (printed);
+}
 
-	ret = run_printf(format, args, output);
-
-	return (ret);
+/**
+ * whitespaces - Skip whitespaces in a string
+ * @format: The string to be evaluated
+ * @i: Pointer to the index of the character being evaluated
+ * Return: 1 if valid specifer, 0 otherwise
+ */
+int whitespaces(const char *format, int *i)
+{
+	for (; format[*i] == ' '; (*i)++)
+		if (format[*i + 1] == '\0')
+			return (0);
+	if (format[*i] == ' ')
+		(*i)++;
+	return (1);
 }
