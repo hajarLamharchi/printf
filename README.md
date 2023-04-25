@@ -4,3 +4,4 @@
 2- With a face like mine i do better in print
 3- what one has not experienced, one will never understand in print
 4- nothing in fine print is ever good news
+5- my weakness is wearing too much leopard print
