@@ -16,11 +16,21 @@ typedef struct fmt
 	int (*fn)(va_list);
 } fmt_t;
 
+typedef struct flags
+{
+	int j;
+	int plus;
+	int space;
+	int hash;
+} flags_t;
+
 /* main */
 int _printf(const char *format, ...);
 
-/* print handler */
+/* handlers */
 int (*get_print(const char *format))(va_list);
+void parse_flags(const char *format, flags_t *flags,
+				 int, int *, int *);
 
 /* print_chars */
 int print_char(va_list list);
@@ -40,13 +50,14 @@ int print_addrs(va_list list);
 
 /* print_customs */
 int print_STR(va_list list);
+int print_rev(va_list list);
 
 /* utilities */
 unsigned int _strlen(char *s);
 void reverse_str(char s[]);
 void _itoa(long n, char s[]);
 int to_base_n(unsigned long num, int base, char s[]);
-char *_memcpy(char *dest, char *src, unsigned int n);
+int _isdigit(int c);
 
 /* writes */
 int _putchar(char c);
